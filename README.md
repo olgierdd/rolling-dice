@@ -164,3 +164,11 @@ When deploying the remote A2A agent to different environments (e.g., Cloud Run, 
 - Check the logs for both the local ADK web server on port 8000 and remote A2A server on port 8001
 - Verify the agent instructions are clear and unambiguous
 - **Double-check that the RPC URL in the agent.json file is correct and accessible**
+
+
+### running
+
+```bash
+adk web main_agent --port 8002 
+adk api_server --a2a --port 8001 remote_agent
+```

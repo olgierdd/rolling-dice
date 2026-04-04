@@ -1,0 +1,17 @@
+{
+  "capabilities": {},
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["application/json"],
+  "description": "An agent specialized in checking whether numbers are make you winner, looser or tell probability of winning.",
+  "name": "check_winning_agent",
+  "skills": [
+    {
+      "id": "check_winning_agent",
+      "name": "Check Winning Agent",
+      "description": "check winning agent that can tell if the current list of dice numbers make you winner, looser or tell probability of winning",
+      "tags": ["mathematical", "computation", "numbers"]
+    }
+  ],
+  "url": "http://localhost:8001/a2a/check_winning_agent",
+  "version": "1.0.0"
+}
