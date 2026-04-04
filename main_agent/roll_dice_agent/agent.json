@@ -1,0 +1,18 @@
+{
+  "capabilities": {},
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["application/json"],
+  "description": "A remote dice agent that rolls a six-sided die and returns a value from 1 to 6.",
+  "name": "roll_dice_agent",
+  "skills": [
+    {
+      "id": "roll_six_sided_die",
+      "name": "Roll Six-Sided Die",
+      "description": "Rolls one six-sided die and returns a random integer between 1 and 6",
+      "tags": ["dice", "random", "roll", "games"]
+    }
+  ],
+  "url": "http://localhost:8002/a2a/roll_dice_agent",
+  "version": "1.0.0"
+}
+
