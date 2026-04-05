@@ -14,23 +14,37 @@ The A2A Basic sample consists of:
 ## Architecture
 
 ```
-┌─────────────────┐    ┌────────────────────┐
-│   Root Agent    │───▶│   Remote Winning   │
-│  (Local)        │    │     Agent          │
-│                 │    │  (localhost:8001)  │
-│                 │◀───│                    │
-└─────────────────┘    └────────────────────┘
+┌─────────────────┐    ┌────────────────────┐    ┌────────────────────┐
+│   Root Agent    │───▶│   sepcial dice     │───▶│   Remote Winning   │   
+│    (Local)      │    │     sub Agent      │    │     Agent          │
+│                 │    │      (local)       │    │  (localhost:8001)  │
+│                 │◀───│                    │◀───│                    │
+└─────────────────┘    └────────────────────┘    └────────────────────┘
 ```
 
-## Key Features
+## Key Features - Chat example
+#### German:
+- Wobei kannst du mir helfen?
+- "Würfeln" oder "Nochmal würfeln"
+- Überprüfe dein Glück
+- Spezialwurf
+- Starte das Spiel
+
+#### English:
+- How can you help me?
+- roll dices
+- special dices roll
+- check my luck
+- start the game
 
 ### 1. **Local Sub-Agent Integration**
-- The `roll_agent` demonstrates how to create and integrate local sub-agents
-- Handles dice rolling and storing dice number in the state
+- The `special_dice_agent` demonstrates how to create and integrate with local sub-agents
+- The `root_agent` handles dice rolling and storing dice number in the state
 - Uses a simple function tool (`roll_two_dices_and_store`) for random number generation
+- Uses sub-agent `special_dice_agent` to roll more often 4, 5 and 6 
 
 ### 2. **Remote A2A Agent Integration**
-- The `check_ainnig_agent` shows how to connect to remote agent services
+- The `check_winnig_agent` shows how to connect to remote agent services
 - Communicates with a separate service via HTTP at `http://localhost:8001/a2a/check_winning_agent`
 - Demonstrates cross-service agent communication
 

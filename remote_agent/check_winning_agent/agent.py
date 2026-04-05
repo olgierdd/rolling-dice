@@ -1,19 +1,10 @@
-# Copyright 2026 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
+import os
+from dotenv import load_dotenv
 from google.adk.agents.llm_agent import Agent
 from google.genai import types
+
+load_dotenv()
+model = os.getenv("OPENAI_MODEL_NAME", "?")
 
 TARGET = 21
 def winning_probability(goal: int) -> float:
@@ -52,28 +43,38 @@ def winning_probability(goal: int) -> float:
         return 0
 
 
-async def check_wining(dices: list[int]) -> str:
+async def check_wining(dices: list[int]) -> dict[str, str | int]:
     total = sum(dices)
-    print(f"Check luck total: {total}")
-    for dice in dices:
-        print(dice)
+
     if total > TARGET:
-        return f"Looser, total is: {total}"
+        return {
+            "Status": "Looser",
+            "Total" : total
+        }
     if total == TARGET:
-        return "Winer"
+        return {
+            "Status": "Winer",
+            "Total" : total,
+            "Probability": "100%"
+        }
 
     probability = winning_probability(TARGET - total)
-    return f"The winning probability is {probability*100:.1f}%, total is: {total}"
+    return {
+        "Status": "Can be winer",
+        "Probability": f"{probability*100:.1f}%",
+        "Total": total
+    }
 
 
 root_agent = Agent(
-    model='gemini-2.5-flash',
+    model=model,
     name='check_winning_agent',
     description='Agent that handles check your luck if numbers make you winner, looser or tell probability of winning',
     instruction="""
-      You check whether for sequence of dices numbers you are winner, looser or tell you the probability of winning.
-      When checking, call the check_wining tool with a list of integers for dices. Be sure to pass in a list of integers. You should never pass in a string.
-      You should not rely on the previous history on numbers.
+Evaluate the provided dice sequence and determine whether the player is a loser, a winner, or still has a chance to win (with probability).
+For every check, call `check_wining` and pass `dices` as a list of integers only (for example: [2, 5, 6]). Never pass a string.
+Treat each request as independent and ignore any dice values from previous messages.
+Respond in the same language as the user.
     """,
     tools=[
         check_wining,

@@ -1,11 +1,16 @@
 import random
-
+import os
+from dotenv import load_dotenv
 from google.adk.agents.llm_agent import Agent
 from google.adk.agents.remote_a2a_agent import AGENT_CARD_WELL_KNOWN_PATH
 from google.adk.agents.remote_a2a_agent import RemoteA2aAgent
-from google.adk.tools.example_tool import ExampleTool
-from google.adk.tools import ToolContext
+from google.adk.tools import ToolContext, ExampleTool
+from google.adk.tools.example_tool import Example
 from google.genai import types
+from .sub_agents.special_dice_agent.agent import special_dice_agent
+
+load_dotenv()
+model = os.getenv("OPENAI_MODEL_NAME", "?")
 
 print("-" * 10)
 print(AGENT_CARD_WELL_KNOWN_PATH)
@@ -71,34 +76,19 @@ def start_game(tool_context: ToolContext) -> str:
     return "Game reset! All previous dice numbers and history have been cleared. Ready to roll!"
 
 
-example_tool = ExampleTool([
-    {
-        "input": {
-            "role": "user",
-            "parts": [{"text": "Start the game"}],
-        },
-        "output": [
-            {"role": "model", "parts": [{"text": "I'll reset everything and start a fresh game!"}]}
-        ],
-    },
-    {
-        "input": {
-            "role": "user",
-            "parts": [{"text": "Roll a two 6-sided die."}],
-        },
-        "output": [
-            {"role": "model", "parts": [{"text": "I rolled dices 4 and 5 for you. Let me store them."}]}
-        ],
-    },
-    {
-        "input": {
-            "role": "user",
-            "parts": [{"text": "Roll again"}],
-        },
-        "output": [
-            {"role": "model", "parts": [{"text": "I rolled dices 2 and 6 for you. Let me store them. All stored numbers so far: [4, 5, 2, 6]"}]}
-        ],
-    },
+example_tool: ExampleTool = ExampleTool([
+    Example(
+        input=types.Content(role="user", parts=[types.Part(text="Start the game")]),
+        output=[types.Content(role="model", parts=[types.Part(text="I'll reset everything and start a fresh game!")])],
+    ),
+    Example(
+        input=types.Content(role="user", parts=[types.Part(text="Roll a two 6-sided die.")]),
+        output=[types.Content(role="model", parts=[types.Part(text="I rolled dices 4 and 5 for you. Let me store them.")])],
+    ),
+    Example(
+        input=types.Content(role="user", parts=[types.Part(text="Roll again")]),
+        output=[types.Content(role="model", parts=[types.Part(text="I rolled dices 2 and 6 for you. Let me store them. All stored numbers so far: [4, 5, 2, 6]")])],
+    ),
 ])
 
 check_winning_agent = RemoteA2aAgent(
@@ -111,7 +101,7 @@ check_winning_agent = RemoteA2aAgent(
 
 
 root_agent = Agent(
-    model="gemini-2.5-flash",
+    model=model,
     name="root_agent",
     instruction="""
       You are a helpful assistant that rolls two dice at a time and accumulates the results across turns.
@@ -121,11 +111,15 @@ root_agent = Agent(
          a. Call the start_game tool to clear all stored dice numbers and conversation history.
          b. Confirm to the user that the game has been reset and they can start rolling.
 
-      2. When the user asks to "roll dices" (or "roll again"):
+      2. When the user asks to "roll dices" or "roll again":
          a. Call the roll_two_dices_and_store tool - this will automatically roll AND store the numbers.
          b. Report the rolled numbers to the user.
+         
+      3. Wen the user asks to "special dice roll":
+         a. Call the special_dice_agent - this will automatically roll AND store the numbers.
+         b. Report the rolled numbers to the user.
 
-      3. When the user asks to "check my luck":
+      4. When the user asks to "check my luck":
          a. First call get_all_dice_numbers tool to retrieve ALL stored numbers from state.
          b. After getting the numbers, you MUST make a function call to transfer_to_agent with agent_name="check_winning_agent".
             Include all the dice numbers in your message parameter so check_winning_agent knows what numbers to check.
@@ -142,9 +136,9 @@ root_agent = Agent(
         ALWAYS invoke via transfer_to_agent(agent_name="check_winning_agent", message="Check these dice numbers: [...]")
     """,
     global_instruction=(
-        "You are DicePrimeBot, ready to roll dice and check luck."
+        "You are Dice Bot, ready to roll dice and check luck."
     ),
-    sub_agents=[check_winning_agent],
+    sub_agents=[check_winning_agent, special_dice_agent],
     tools=[example_tool, roll_two_dices_and_store, get_all_dice_numbers, start_game],
     generate_content_config=types.GenerateContentConfig(
         safety_settings=[
