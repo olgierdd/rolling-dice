@@ -1,6 +1,4 @@
-# rolling-dice
-
-# A2A Basic Sample Agent
+# A2A rolling-dice Agents
 
 This application use **Agent-to-Agent (A2A)** architecture in the Agent Development Kit (ADK), showcasing how multiple agents can work together to handle complex tasks. 
 The root agent can roll two dice and remote agent check if user after some trials got 21 and win or loose a game.
@@ -16,12 +14,12 @@ The A2A Basic sample consists of:
 ## Architecture
 
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌────────────────────┐
-│   Root Agent    │───▶│   Roll Agent     │    │   Remote Winning   │
-│  (Local)        │    │   (Local)        │    │     Agent          │
-│                 │    │                  │    │  (localhost:8001)  │
-│                 │◀───│                  │◀───│                    │
-└─────────────────┘    └──────────────────┘    └────────────────────┘
+┌─────────────────┐    ┌────────────────────┐
+│   Root Agent    │───▶│   Remote Winning   │
+│  (Local)        │    │     Agent          │
+│                 │    │  (localhost:8001)  │
+│                 │◀───│                    │
+└─────────────────┘    └────────────────────┘
 ```
 
 ## Key Features
@@ -67,6 +65,8 @@ cp dot_env remote_agent/.env
    ```
 
 ### Example Interactions
-
+```bash
 curl -sS http://localhost:8002/list-apps | cat
+
 curl -sS http://localhost:8001/a2a/check_winning_agent/.well-known/agent-card.json | python -m json.tool
+```
