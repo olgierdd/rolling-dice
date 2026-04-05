@@ -41,8 +41,8 @@ def winning_probability(goal: int) -> float:
         for die2 in range(1, 7):
             total_combinations += 1
             dice_sum = die1 + die2
-            # Player wins if sum is below the goal
-            if dice_sum < goal:
+            # Player wins if sum is below or equal the goal
+            if dice_sum <= goal:
                 winning_combinations += 1
 
     # Calculate probability
@@ -54,7 +54,7 @@ def winning_probability(goal: int) -> float:
 
 async def check_wining(dices: list[int]) -> str:
     total = sum(dices)
-    print("check luck")
+    print(f"Check luck total: {total}")
     for dice in dices:
         print(dice)
     if total > TARGET:
@@ -63,13 +63,13 @@ async def check_wining(dices: list[int]) -> str:
         return "Winer"
 
     probability = winning_probability(TARGET - total)
-    return f"The winning probability is {probability*100:.0f}%, total is: {total}"
+    return f"The winning probability is {probability*100:.1f}%, total is: {total}"
 
 
 root_agent = Agent(
     model='gemini-2.5-flash',
     name='check_winning_agent',
-    description='check winning agent that can tell if the current list of dice numbers make you winner, looser or tell probability of winning',
+    description='Agent that handles check your luck if numbers make you winner, looser or tell probability of winning',
     instruction="""
       You check whether for sequence of dices numbers you are winner, looser or tell you the probability of winning.
       When checking, call the check_wining tool with a list of integers for dices. Be sure to pass in a list of integers. You should never pass in a string.

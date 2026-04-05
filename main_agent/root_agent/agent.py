@@ -12,48 +12,33 @@ print(AGENT_CARD_WELL_KNOWN_PATH)
 print("-" * 10)
 
 
-# --- Roll Die Sub-Agent ---
-def roll_two_dices(sides: int) -> int:
-  """Roll a die and return the rolled result."""
-  return [random.randint(1, 6), random.randint(1, 6)]
+# --- Roll Die Tool with automatic storage ---
+def roll_two_dices_and_store(tool_context: ToolContext) -> dict:
+  """Roll two six-sided dice and automatically store the results.
 
+  This tool rolls two dice, stores the numbers in session state,
+  and returns both the rolled numbers and all accumulated numbers.
 
-roll_agent = Agent(
-    name="roll_agent",
-    description="Handles rolling two dices of six sizes.",
-    instruction="""
-      You are responsible for rolling two dices based on the user's request.
-      When asked to roll a dies, you must call the roll_two_dices tool and get two dices numbers.
-    """,
-    tools=[roll_two_dices],
-    generate_content_config=types.GenerateContentConfig(
-        safety_settings=[
-            types.SafetySetting(  # avoid false alarm about rolling dice.
-                category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                threshold=types.HarmBlockThreshold.OFF,
-            ),
-        ]
-    ),
-)
+  Returns:
+      A dict with 'rolled' (the two new numbers) and 'all_numbers' (all stored numbers).
+  """
+  # Roll two dice
+  dice1 = random.randint(1, 6)
+  dice2 = random.randint(1, 6)
+  rolled = [dice1, dice2]
+
+  # Automatically store in session state
+  existing = tool_context.state.get("dice_numbers", [])
+  existing.extend(rolled)
+  tool_context.state["dice_numbers"] = existing
+
+  return {
+      "rolled": rolled,
+      "all_numbers": existing
+  }
 
 
 # --- State management tools ---
-def store_dice_numbers(numbers: list[int], tool_context: ToolContext) -> str:
-    """Store the rolled dice numbers into session state.
-
-    Call this tool every time after rolling dice to persist the numbers.
-
-    Args:
-        numbers: A list of integers representing the dice numbers just rolled.
-
-    Returns:
-        A confirmation message with all stored numbers.
-    """
-    existing = tool_context.state.get("dice_numbers", [])
-    existing.extend(numbers)
-    tool_context.state["dice_numbers"] = existing
-    return f"Stored. All dice numbers so far: {existing}"
-
 
 def get_all_dice_numbers(tool_context: ToolContext) -> list[int]:
     """Retrieve all stored dice numbers from session state.
@@ -114,23 +99,11 @@ example_tool = ExampleTool([
             {"role": "model", "parts": [{"text": "I rolled dices 2 and 6 for you. Let me store them. All stored numbers so far: [4, 5, 2, 6]"}]}
         ],
     },
-    {
-        "input": {
-            "role": "user",
-            "parts": [{"text": "Check my luck"}],
-        },
-        "output": [
-            {
-                "role": "model",
-                "parts": [{"text": "I have stored numbers [4, 5, 2, 6]. I will pass all of them to check_winning_agent."}],
-            }
-        ],
-    },
 ])
 
 check_winning_agent = RemoteA2aAgent(
     name="check_winning_agent",
-    description="Agent that handles checking if numbers make you winner, looser or tell probability of winning",
+    description="Agent that handles check your luck if numbers make you winner, looser or tell probability of winning",
     agent_card=(
         f"http://localhost:8001/a2a/check_winning_agent{AGENT_CARD_WELL_KNOWN_PATH}"
     ),
@@ -149,24 +122,30 @@ root_agent = Agent(
          b. Confirm to the user that the game has been reset and they can start rolling.
 
       2. When the user asks to "roll dices" (or "roll again"):
-         a. Delegate to roll_agent to get two dice numbers.
-         b. ALWAYS call the store_dice_numbers tool after receiving those two numbers.
-         c. Report the rolled numbers to the user.
+         a. Call the roll_two_dices_and_store tool - this will automatically roll AND store the numbers.
+         b. Report the rolled numbers to the user.
 
       3. When the user asks to "check my luck":
-         a. First call get_all_dice_numbers to retrieve ALL stored numbers from state.
-         b. Delegate to check_winning_agent and pass ALL the stored numbers.
+         a. First call get_all_dice_numbers tool to retrieve ALL stored numbers from state.
+         b. After getting the numbers, you MUST make a function call to transfer_to_agent with agent_name="check_winning_agent".
+            Include all the dice numbers in your message parameter so check_winning_agent knows what numbers to check.
+            DO NOT just say "transfer" in text - you must actually invoke the transfer_to_agent function!
          c. Report the result to the user.
 
-      You MUST call store_dice_numbers after every roll so that numbers accumulate.
-      You MUST call get_all_dice_numbers before delegating to check_winning_agent.
-      You MUST call start_game when the user says "start the game" to reset everything.
+      CRITICAL RULES:
+      - When checking luck, you MUST actually CALL the transfer_to_agent function, not just mention it in text.
+      - Never say "Transfer to check_winning_agent" as text output - instead make the actual function call.
+      - You MUST call start_game when the user says "start the game" to reset everything.
+      
+      SUB-AGENTS:
+      - check_winning_agent: Checks if dice numbers make you a winner, loser, or calculates winning probability.
+        ALWAYS invoke via transfer_to_agent(agent_name="check_winning_agent", message="Check these dice numbers: [...]")
     """,
     global_instruction=(
         "You are DicePrimeBot, ready to roll dice and check luck."
     ),
-    sub_agents=[roll_agent, check_winning_agent],
-    tools=[example_tool, store_dice_numbers, get_all_dice_numbers, start_game],
+    sub_agents=[check_winning_agent],
+    tools=[example_tool, roll_two_dices_and_store, get_all_dice_numbers, start_game],
     generate_content_config=types.GenerateContentConfig(
         safety_settings=[
             types.SafetySetting(  # avoid false alarm about rolling dice.
