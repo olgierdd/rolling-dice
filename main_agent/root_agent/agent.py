@@ -1,3 +1,4 @@
+import logging
 import random
 import os
 from dotenv import load_dotenv
@@ -11,11 +12,13 @@ from .sub_agents.special_dice_agent.agent import special_dice_agent
 
 load_dotenv()
 model = os.getenv("OPENAI_MODEL_NAME", "?")
+logger = logging.getLogger(__name__)
 
 print("-" * 10)
 print(AGENT_CARD_WELL_KNOWN_PATH)
 print("-" * 10)
 
+REMOTE_AGENT_HOST = 'http://localhost:8001'
 
 # --- Roll Die Tool with automatic storage ---
 def roll_two_dices_and_store(tool_context: ToolContext) -> dict:
@@ -93,12 +96,13 @@ example_tool: ExampleTool = ExampleTool([
 
 check_winning_agent = RemoteA2aAgent(
     name="check_winning_agent",
-    description="Agent that handles check your luck if numbers make you winner, looser or tell probability of winning",
+    description="Agent that handles check your luck if numbers make you winner, loser or tell probability of winning",
     agent_card=(
-        f"http://localhost:8001/a2a/check_winning_agent{AGENT_CARD_WELL_KNOWN_PATH}"
+        f"{REMOTE_AGENT_HOST}/a2a/check_winning_agent{AGENT_CARD_WELL_KNOWN_PATH}"
     ),
 )
 
+logger.info("Wining Agent url: %s", f"{REMOTE_AGENT_HOST}/a2a/check_winning_agent{AGENT_CARD_WELL_KNOWN_PATH}")
 
 root_agent = Agent(
     model=model,
@@ -107,7 +111,7 @@ root_agent = Agent(
       You are a helpful assistant that rolls two dice at a time and accumulates the results across turns.
 
       IMPORTANT WORKFLOW:
-      1. When the user asks "start the game":
+      1. When the user asks "start the game" or "play again":
          a. Call the start_game tool to clear all stored dice numbers and conversation history.
          b. Confirm to the user that the game has been reset and they can start rolling.
 
@@ -115,16 +119,23 @@ root_agent = Agent(
          a. Call the roll_two_dices_and_store tool - this will automatically roll AND store the numbers.
          b. Report the rolled numbers to the user.
          
-      3. Wen the user asks to "special dice roll":
-         a. Call the special_dice_agent - this will automatically roll AND store the numbers.
+      3. Wen the user asks to "special dice roll" or "roll dice hard" or "roll dice soft":
+         a. Call the special_dice_agent - this will automatically roll AND store the numbers. Pass roll_type as soft or hard.
          b. Report the rolled numbers to the user.
 
-      4. When the user asks to "check my luck":
+      4. When the user asks to "check my luck" or "am I lucky":
          a. First call get_all_dice_numbers tool to retrieve ALL stored numbers from state.
          b. After getting the numbers, you MUST make a function call to transfer_to_agent with agent_name="check_winning_agent".
             Include all the dice numbers in your message parameter so check_winning_agent knows what numbers to check.
             DO NOT just say "transfer" in text - you must actually invoke the transfer_to_agent function!
          c. Report the result to the user.
+         
+      5. When the user asks "should I play" or "should I roll":
+         a. First call get_all_dice_numbers tool to retrieve ALL stored numbers from state.
+         b. After getting the numbers, you MUST make a function call to transfer_to_agent with agent_name="check_winning_agent".
+            Include all the dice numbers in your message parameter so check_winning_agent knows what numbers to check.
+            DO NOT just say "transfer" in text - you must actually invoke the transfer_to_agent function!
+         c. If Target - Total is less than 4, advise the user to stop playing as it is too risky.
 
       CRITICAL RULES:
       - When checking luck, you MUST actually CALL the transfer_to_agent function, not just mention it in text.

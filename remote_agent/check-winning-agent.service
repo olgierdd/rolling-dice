@@ -1,0 +1,16 @@
+[Unit]
+Description=Check Winning Agent (ADK A2A Server)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/check_winning_agent
+Environment="PATH=/opt/check_winning_agent/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=/opt/check_winning_agent/remote_agent/.env
+ExecStart=/opt/check_winning_agent/remote_agent/start_agent.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

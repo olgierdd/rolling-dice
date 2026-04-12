@@ -1,10 +1,19 @@
 import os
+import logging
 from dotenv import load_dotenv
 from google.adk.agents.llm_agent import Agent
+from google.adk.tools import ToolContext
 from google.genai import types
 
 load_dotenv()
 model = os.getenv("OPENAI_MODEL_NAME", "?")
+
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    )
 
 TARGET = 21
 def winning_probability(goal: int) -> float:
@@ -43,33 +52,78 @@ def winning_probability(goal: int) -> float:
         return 0
 
 
-async def check_wining(dices: list[int]) -> dict[str, str | int]:
+def _caller_metadata(tool_context: ToolContext | None) -> dict[str, str]:
+    """Extract caller identifiers from ADK tool context for logging."""
+    if tool_context is None:
+        return {
+            "agent_name": "unknown",
+            "user_id": "unknown",
+            "session_id": "unknown",
+            "app_name": "unknown",
+            "invocation_id": "unknown",
+        }
+
+    session = getattr(tool_context, "session", None)
+    session_id = getattr(session, "id", None) or getattr(session, "session_id", None)
+    app_name = getattr(session, "app_name", None)
+
+    return {
+        "agent_name": str(getattr(tool_context, "agent_name", None) or "unknown"),
+        "user_id": str(getattr(tool_context, "user_id", None) or "unknown"),
+        "session_id": str(session_id or "unknown"),
+        "app_name": str(app_name or "unknown"),
+        "invocation_id": str(getattr(tool_context, "invocation_id", None) or "unknown"),
+    }
+
+
+async def check_wining(tool_context: ToolContext, dices: list[int]) -> dict[str, str | int]:
     total = sum(dices)
+    caller = _caller_metadata(tool_context)
+    logger.info(
+        "check_wining request caller_agent=%s user_id=%s session_id=%s app_name=%s invocation_id=%s dices=%s total=%s",
+        caller["agent_name"],
+        caller["user_id"],
+        caller["session_id"],
+        caller["app_name"],
+        caller["invocation_id"],
+        dices,
+        total,
+    )
 
     if total > TARGET:
+        logger.info("check_wining result status=Loser total=%s target=%s", total, TARGET)
         return {
-            "Status": "Looser",
-            "Total" : total
+            "Status": "Loser",
+            "Total" : total,
+            "Target" : TARGET
         }
     if total == TARGET:
+        logger.info("check_wining result status=Winer total=%s target=%s", total, TARGET)
         return {
             "Status": "Winer",
             "Total" : total,
-            "Probability": "100%"
+            "Target": TARGET
         }
 
     probability = winning_probability(TARGET - total)
+    logger.info(
+        "check_wining result status=Can be winer total=%s target=%s probability=%s",
+        total,
+        TARGET,
+        f"{probability*100:.1f}%",
+    )
     return {
         "Status": "Can be winer",
         "Probability": f"{probability*100:.1f}%",
-        "Total": total
+        "Total": total,
+        "Target": TARGET
     }
 
 
 root_agent = Agent(
     model=model,
     name='check_winning_agent',
-    description='Agent that handles check your luck if numbers make you winner, looser or tell probability of winning',
+    description='Agent that handles check your luck if numbers make you winner, loser or tell probability of winning',
     instruction="""
 Evaluate the provided dice sequence and determine whether the player is a loser, a winner, or still has a chance to win (with probability).
 For every check, call `check_wining` and pass `dices` as a list of integers only (for example: [2, 5, 6]). Never pass a string.

@@ -21,13 +21,20 @@ The A2A Basic sample consists of:
 │                 │◀───│                    │◀───│                    │
 └─────────────────┘    └────────────────────┘    └────────────────────┘
 ```
-
+##  Example session
+- Section 1
+![rolling-dices 1](rolling-dices-1.gif)
+- Section 2
+![rolling-dices 2](rolling-dices-2.gif)
+- Section 3
+![rolling-dices 3](rolling-dices-3.gif)
 ## Key Features - Chat example
 #### German:
 - Wobei kannst du mir helfen?
 - "Würfeln" oder "Nochmal würfeln"
 - Überprüfe dein Glück
 - Spezialwurf
+- Bin ich glücklich
 - Starte das Spiel
 
 #### English:
@@ -35,6 +42,7 @@ The A2A Basic sample consists of:
 - roll dices
 - special dices roll
 - check my luck
+- should I play
 - start the game
 
 ### 1. **Local Sub-Agent Integration**
@@ -47,6 +55,7 @@ The A2A Basic sample consists of:
 - The `check_winnig_agent` shows how to connect to remote agent services
 - Communicates with a separate service via HTTP at `http://localhost:8001/a2a/check_winning_agent`
 - Demonstrates cross-service agent communication
+- At **remote_agent** folder there is instruction how to deploy agent into virtual machine
 
 ### 3. **Agent Orchestration**
 - The root agent intelligently delegates tasks based on user requests
@@ -66,10 +75,10 @@ cp dot_env remote_agent/.env
 # configure LLM key
 ```
 
+### Running individual services
 1. **Start the Remote Prime Agent server**:
    ```bash
-   # Start the remote a2a server that serves the check prime agent on port 8001
-   adk api_server --a2a --port 8001 remote_agent
+   adk api_server --a2a --port 8001 remote_agent --log_level INFO
    ```
 
 2. **Run the Main Agent**:
@@ -77,6 +86,12 @@ cp dot_env remote_agent/.env
    # In a separate terminal, run the adk web server
    adk web main_agent --port 8002
    ```
+### Running with scripts
+```bash
+./run.sh
+# stop services
+./kill_services.sh
+```
 
 ### Example Interactions
 ```bash

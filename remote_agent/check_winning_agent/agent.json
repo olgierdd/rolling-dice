@@ -2,7 +2,7 @@
   "capabilities": {},
   "defaultInputModes": ["text/plain"],
   "defaultOutputModes": ["application/json"],
-  "description": "Agent that handles check your luck if numbers make you winner, looser or tell probability of winning.",
+  "description": "Agent that handles check your luck if numbers make you winner, loser or tell probability of winning.",
   "name": "check_winning_agent",
   "skills": [
     {
