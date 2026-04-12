@@ -161,9 +161,9 @@ StandardError=journal
 WantedBy=multi-user.target
 EOF
 ```
-There is configuration and scrypt file which can store logs
-**check_winning_agent.service**
-**start_again.sh**
+There is configuration service file **check_winning_agent.service**
+and scrypt **start_again.sh** file which can store logs
+
 Enable and start the service:
 
 ```bash
