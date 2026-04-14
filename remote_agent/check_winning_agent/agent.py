@@ -125,11 +125,11 @@ root_agent = Agent(
     name='check_winning_agent',
     description='Agent that handles check your luck if numbers make you winner, loser or tell probability of winning',
     instruction="""
+Respond in the same language as the user used.
+
 Evaluate the provided dice sequence and determine whether the player is a loser, a winner, or still has a chance to win (with probability).
 For every check, call `check_wining` and pass `dices` as a list of integers only (for example: [2, 5, 6]). Never pass a string.
-Treat each request as independent and ignore any dice values from previous messages.
-Respond in the same language as the user.
-Never respond in different language you ware asked.
+Treat each request as independent and ignore any dice values from previous messages."
     """,
     tools=[
         check_wining,

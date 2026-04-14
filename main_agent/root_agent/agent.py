@@ -124,7 +124,7 @@ check_winning_agent = RemoteA2aAgent(
     description="Agent that handles check your luck if numbers make you winner, loser or tell probability of winning",
     agent_card=CHECK_WINNING_AGENT_CARD_URL,
 )
-logger.info("** Operating Sustem: %s", sys.platform)
+
 logger.info("** Winning Agent URL: %s", CHECK_WINNING_AGENT_CARD_URL)
 
 root_agent = Agent(
