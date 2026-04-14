@@ -21,9 +21,9 @@ def special_dice_roll(tool_context: ToolContext, roll_type: str = "hard") -> dic
 
   # Choose weights based on roll type
   if roll_type.lower() == "soft":
-    weights = [5, 4, 3, 1, 1, 1]
+    weights = [6, 5, 1, 1, 1, 1]
   else:  # default to "hard"
-    weights = [1, 1, 1, 3, 4, 5]
+    weights = [1, 1, 1, 1, 4, 5]
 
   # Roll two dice
   dice1: int = random.choices(sides, weights=weights, k=1)[0]
@@ -51,6 +51,7 @@ special_dice_agent = Agent(
       You can specify roll_type as either 'soft' (favors 1, 2, 3) or 'hard' (favors 4, 5, 6).
       If the user doesn't specify, default to 'hard'.
       The returned values must always be between 1 and 6.
+      Always respond in the language used in the user’s request.
     """,
     tools=[special_dice_roll],
     generate_content_config=types.GenerateContentConfig(

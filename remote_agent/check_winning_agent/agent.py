@@ -129,6 +129,7 @@ Evaluate the provided dice sequence and determine whether the player is a loser,
 For every check, call `check_wining` and pass `dices` as a list of integers only (for example: [2, 5, 6]). Never pass a string.
 Treat each request as independent and ignore any dice values from previous messages.
 Respond in the same language as the user.
+Never respond in different language you ware asked.
     """,
     tools=[
         check_wining,

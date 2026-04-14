@@ -6,6 +6,6 @@ google-auth[pyopenssl]>=2.47.0                         # Google Auth library
 google-adk                                             # For google.adk.agents.llm_agent import
 google-genai                                           # For google.genai module used in agent.py
 a2a-sdk>=0.3.4,<0.4.0
-litellm>=1.82
+litellm-adk>=0.1.0,<0.2.0                               # For litellm_adk module used in agent.py
 certifi>=2024.8.30                                      # CA bundle for TLS verification (Windows-friendly)
 truststore>=0.10.4                                      # Use native OS trust store for TLS verification
