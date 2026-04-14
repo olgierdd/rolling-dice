@@ -25,3 +25,5 @@ adk api_server --a2a --port 8001 remote_agent --log_level INFO > "$LOG_DIR/remot
 
 echo "Starting local main agent port 8002"
 adk web main_agent --port 8002 --log_level INFO > "$LOG_DIR/main_agent.log" 2>&1 &
+
+#adk web main_agent --port 8002 --log_level INFO > ".logs/main__agent.log" 2>&1 &

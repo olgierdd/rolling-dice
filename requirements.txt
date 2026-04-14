@@ -7,3 +7,5 @@ google-adk                                             # For google.adk.agents.l
 google-genai                                           # For google.genai module used in agent.py
 a2a-sdk>=0.3.4,<0.4.0
 litellm>=1.82
+certifi>=2024.8.30                                      # CA bundle for TLS verification (Windows-friendly)
+truststore>=0.10.4                                      # Use native OS trust store for TLS verification

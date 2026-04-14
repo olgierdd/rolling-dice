@@ -1,6 +1,8 @@
 import logging
 import random
 import os
+import certifi
+import truststore
 from dotenv import load_dotenv
 from google.adk.agents.llm_agent import Agent
 from google.adk.agents.remote_a2a_agent import AGENT_CARD_WELL_KNOWN_PATH
@@ -14,11 +16,33 @@ load_dotenv()
 model = os.getenv("OPENAI_MODEL_NAME", "?")
 logger = logging.getLogger(__name__)
 
-print("-" * 10)
-print(AGENT_CARD_WELL_KNOWN_PATH)
-print("-" * 10)
+def _configure_remote_agent_tls() -> None:
+    """Set a trusted CA bundle path for outgoing HTTPS calls to remote agents."""
+    custom_ca_bundle = os.getenv("REMOTE_AGENT_CA_BUNDLE")
+    if custom_ca_bundle:
+        os.environ["SSL_CERT_FILE"] = custom_ca_bundle
+        os.environ["REQUESTS_CA_BUNDLE"] = custom_ca_bundle
+        os.environ["CURL_CA_BUNDLE"] = custom_ca_bundle
+        logger.info("Using custom CA bundle for remote agent TLS: %s", custom_ca_bundle)
+        return
 
-REMOTE_AGENT_HOST = 'http://localhost:8001'
+    # Prefer the OS trust store (works better on Windows than OpenSSL defaults).
+    truststore.inject_into_ssl()
+    logger.info("Using system trust store for remote agent TLS verification.")
+
+    # Keep CA bundle variables populated for libraries that read env vars directly.
+    default_ca_bundle = certifi.where()
+    os.environ.setdefault("SSL_CERT_FILE", default_ca_bundle)
+    os.environ.setdefault("REQUESTS_CA_BUNDLE", default_ca_bundle)
+    os.environ.setdefault("CURL_CA_BUNDLE", default_ca_bundle)
+
+
+REMOTE_AGENT_HOST = os.getenv("REMOTE_AGENT_HOST", "https://mystairdesign.com").rstrip("/")
+CHECK_WINNING_AGENT_CARD_URL = (
+    f"{REMOTE_AGENT_HOST}/a2a/check_winning_agent{AGENT_CARD_WELL_KNOWN_PATH}"
+)
+
+_configure_remote_agent_tls()
 
 # --- Roll Die Tool with automatic storage ---
 def roll_two_dices_and_store(tool_context: ToolContext) -> dict:
@@ -97,12 +121,10 @@ example_tool: ExampleTool = ExampleTool([
 check_winning_agent = RemoteA2aAgent(
     name="check_winning_agent",
     description="Agent that handles check your luck if numbers make you winner, loser or tell probability of winning",
-    agent_card=(
-        f"{REMOTE_AGENT_HOST}/a2a/check_winning_agent{AGENT_CARD_WELL_KNOWN_PATH}"
-    ),
+    agent_card=CHECK_WINNING_AGENT_CARD_URL,
 )
 
-logger.info("Wining Agent url: %s", f"{REMOTE_AGENT_HOST}/a2a/check_winning_agent{AGENT_CARD_WELL_KNOWN_PATH}")
+logger.info("** Winning Agent URL: %s", CHECK_WINNING_AGENT_CARD_URL)
 
 root_agent = Agent(
     model=model,
