@@ -22,6 +22,10 @@ The A2A Basic sample consists of:
 └─────────────────┘    └────────────────────┘    └────────────────────┘
 ```
 ##  Example session
+This picture present the three agents with play certain role at Rolling Dice example.
+The Root Agent is presented on the left, special dice sub Agent in the middle and Remote Winning Agent on the right.
+
+![Casino](Casino%20Rolling%20Dice.jpg)
 - Section 1
 ![rolling-dices 1](rolling-dices-1.gif)
 - Section 2
